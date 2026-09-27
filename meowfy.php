@@ -600,25 +600,18 @@ function handleUpdate(array $update): void {
 $offset = 0;
 
 echo "🐈 Meowfy is running...\n";
+// ---- Webhook mode ----
+$content = file_get_contents('php://input');
+$update = json_decode($content, true);
 
-while (true) {
-    $result = tg('getUpdates', [
-        'offset' => $offset,
-        'timeout' => 30,
-        'allowed_updates' => json_encode(['message', 'callback_query']),
-    ]);
-
-    if (!($result['ok'] ?? false)) {
-        sleep(2);
-        continue;
-    }
-
-    foreach (($result['result'] ?? []) as $update) {
-        $offset = ((int)$update['update_id']) + 1;
-        try {
-            handleUpdate($update);
-        } catch (Throwable $e) {
-            error_log('Update error: ' . $e->getMessage());
-        }
+if (is_array($update)) {
+    try {
+        handleUpdate($update);
+    } catch (Throwable $e) {
+        error_log('Update error: ' . $e->getMessage());
     }
 }
+
+http_response_code(200);
+echo 'OK';
+
