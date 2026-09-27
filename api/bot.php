@@ -597,10 +597,7 @@ function handleUpdate(array $update): void {
     if ($text !== '') handleTime($chatId, $userId, $text);
 }
 
-$offset = 0;
 
-echo "🐈 Meowfy is running...\n";
-// ---- Webhook mode ----
 $content = file_get_contents('php://input');
 $update = json_decode($content, true);
 
