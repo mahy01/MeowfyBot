@@ -1,0 +1,4 @@
+.env
+required_channel.json
+user_states.json
+*.log
