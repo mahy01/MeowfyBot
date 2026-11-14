@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Meowfy - Telegram Audio Bot
@@ -22,7 +21,8 @@
 // =====================================
 
 const SPONSOR_CHANNEL = '@LearnDotfar';
-const STATE_FILE = __DIR__ . '/user_states.json';
+// اصلاح مسیر ذخیره استیت برای سازگاری کامل با محیط Read-Only در Vercel
+define('STATE_FILE', sys_get_temp_dir() . '/user_states.json');
 const CANCEL_BUTTON = 'لغو';
 
 $BOT_TOKEN = getenv('BOT_TOKEN') ?: '';
@@ -693,7 +693,7 @@ function showChannelCommand(
 
 // =====================================
 // VOICE TO MP3
-=====================================
+// =====================================
 
 function handleVoice(
     int $chatId,
@@ -1058,13 +1058,13 @@ function handleTime(
     string $text
 ): void {
 
-    if (!checkMembership([], $chatId, $userId)) {
+    if (!checkMembership([], $chatId,$userId)) {
         return;
     }
 
     $state = getUserState($userId);
 
-    $current = $state['state'] ?? null;
+    $current =$state['state'] ?? null;
 
     if (!in_array(
         $current,
@@ -1077,7 +1077,7 @@ function handleTime(
     $text = trim($text);
 
     if ($text === CANCEL_BUTTON) {
-        cancelOperation($chatId, $userId);
+        cancelOperation($chatId,$userId);
         return;
     }
 
@@ -1095,7 +1095,7 @@ function handleTime(
         return;
     }
 
-    $duration = $state['duration'] ?? null;
+    $duration =$state['duration'] ?? null;
 
     if ($duration === null) {
 
@@ -1115,7 +1115,7 @@ function handleTime(
 
     if ($current === 'waiting_start') {
 
-        if ($seconds >= $duration) {
+        if ($seconds >=$duration) {
 
             sendMessage(
                 $chatId,
@@ -1127,10 +1127,10 @@ function handleTime(
             return;
         }
 
-        $state['start'] = $seconds;
+        $state['start'] =$seconds;
         $state['state'] = 'waiting_end';
 
-        setUserState($userId, $state);
+        setUserState($userId,$state);
 
         sendMessage(
             $chatId,
@@ -1147,7 +1147,7 @@ function handleTime(
 
     // END TIME
 
-    $start = $state['start'] ?? null;
+    $start =$state['start'] ?? null;
 
     if ($start === null) {
 
@@ -1163,7 +1163,7 @@ function handleTime(
         return;
     }
 
-    if ($seconds > $duration) {
+    if ($seconds >$duration) {
 
         sendMessage(
             $chatId,
@@ -1175,7 +1175,7 @@ function handleTime(
         return;
     }
 
-    if ($seconds <= $start) {
+    if ($seconds <=$start) {
 
         sendMessage(
             $chatId,
@@ -1187,7 +1187,7 @@ function handleTime(
         return;
     }
 
-    $cutDuration = $seconds - $start;
+    $cutDuration = $seconds -$start;
 
     if ($cutDuration > 120) {
 
@@ -1202,7 +1202,7 @@ function handleTime(
         return;
     }
 
-    $input = $state['input_file'] ?? null;
+    $input =$state['input_file'] ?? null;
 
     if (!$input || !is_file($input)) {
 
@@ -1238,10 +1238,9 @@ function handleTime(
             ' -map 0:a:0 -vn -c:a libopus -b:a 96k ' .
             escapeshellarg($output) . ' 2>&1';
 
-        $ffout = [];
-        $code = 0;
+        $ffout = [];$code = 0;
 
-        exec($cmd, $ffout, $code);
+        exec($cmd, $ffout,$code);
 
         if (
             $code !== 0 ||
@@ -1259,7 +1258,7 @@ function handleTime(
             return;
         }
 
-        $result = sendVoice($chatId, $output);
+        $result = sendVoice($chatId,$output);
 
         if (!($result['ok'] ?? false)) {
             sendError($chatId);
@@ -1295,11 +1294,9 @@ function handleUpdate(array $update): void {
 
     if (isset($update['callback_query'])) {
 
-        $q = $update['callback_query'];
+        $q =$update['callback_query'];
 
-        $callbackId = $q['id'];
-        $userId = (int)$q['from']['id'];
-        $chatId = (int)($q['message']['chat']['id'] ?? $userId);
+        $callbackId = $q['id'];$userId = (int)$q['from']['id'];$chatId = (int)($q['message']['chat']['id'] ?? $userId);
 
         if (($q['data'] ?? '') === 'check_join') {
 
@@ -1330,15 +1327,14 @@ function handleUpdate(array $update): void {
 
     // MESSAGE
 
-    $message = $update['message'] ?? null;
+    $message =$update['message'] ?? null;
 
     if (!$message) {
         return;
     }
 
-    $chatId = (int)$message['chat']['id'];
-    $userId = (int)($message['from']['id'] ?? $chatId);
-    $text = $message['text'] ?? '';
+    $chatId = (int)$message['chat']['id'];$userId = (int)($message['from']['id'] ?? $chatId);
+    $text =$message['text'] ?? '';
 
     // COMMANDS
 
@@ -1355,11 +1351,11 @@ function handleUpdate(array $update): void {
         switch ($command) {
 
             case '/start':
-                startCommand($chatId, $userId);
+                startCommand($chatId,$userId);
                 break;
 
             case '/help':
-                if (checkMembership([], $chatId, $userId)) {
+                if (checkMembership([], $chatId,$userId)) {
                     helpCommand($chatId);
                 }
                 break;
@@ -1373,21 +1369,21 @@ function handleUpdate(array $update): void {
                     ['waiting_start', 'waiting_end'],
                     true
                 )) {
-                    cancelOperation($chatId, $userId);
+                    cancelOperation($chatId,$userId);
                 }
 
                 break;
 
             case '/setchannel':
-                setChannelCommand($chatId, $userId, $args);
+                setChannelCommand($chatId, $userId,$args);
                 break;
 
             case '/removechannel':
-                removeChannelCommand($chatId, $userId);
+                removeChannelCommand($chatId,$userId);
                 break;
 
             case '/channel':
-                showChannelCommand($chatId, $userId);
+                showChannelCommand($chatId,$userId);
                 break;
         }
 
@@ -1398,7 +1394,7 @@ function handleUpdate(array $update): void {
 
     if (isset($message['voice'])) {
 
-        handleVoice($chatId, $userId, $message);
+        handleVoice($chatId, $userId,$message);
 
         return;
     }
@@ -1407,7 +1403,7 @@ function handleUpdate(array $update): void {
 
     if (isset($message['video'])) {
 
-        handleVideo($chatId, $userId, $message);
+        handleVideo($chatId, $userId,$message);
 
         return;
     }
@@ -1416,7 +1412,7 @@ function handleUpdate(array $update): void {
 
     if (isset($message['audio'])) {
 
-        handleMusic($chatId, $userId, $message);
+        handleMusic($chatId, $userId,$message);
 
         return;
     }
@@ -1425,55 +1421,14 @@ function handleUpdate(array $update): void {
 
     if (isset($message['document'])) {
 
-        $mime = strtolower(
-            $message['document']['mime_type'] ?? ''
+        $mime = strtolower($message['document']['mime_type'] ?? ''
         );
 
         if (str_starts_with($mime, 'video/')) {
 
-            handleVideo($chatId, $userId, $message);
+            handleVideo($chatId, $userId,$message);
 
             return;
         }
 
-        if (str_starts_with($mime, 'audio/')) {
-
-            handleMusic($chatId, $userId, $message);
-
-            return;
-        }
-
-        return;
-    }
-
-    // TIME INPUT
-
-    if ($text !== '') {
-
-        handleTime($chatId, $userId, $text);
-    }
-}
-
-// =====================================
-// WEBHOOK ENTRY POINT
-// =====================================
-
-$content = file_get_contents('php://input');
-
-$update = json_decode($content, true);
-
-if (is_array($update)) {
-
-    try {
-
-        handleUpdate($update);
-
-    } catch (Throwable $e) {
-
-        error_log('Update error: ' . $e->getMessage());
-    }
-}
-
-http_response_code(200);
-
-echo 'OK';
+        if (str_starts_with($mime, 'audio/'))
